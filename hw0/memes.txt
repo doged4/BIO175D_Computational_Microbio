@@ -1,0 +1,13 @@
+mv starter_files/memes/lotr/highground.jpg starter_files/memes/sw/
+rm starter_files/memes/lotr/mordor.png
+cp starter_files/memes/lotr/nadh.jpg starter_files/memes/sci/
+ln -s /root/starter_files/memes/lotr/small.jpg /root/starter_files/memes/sci/
+mkdir starter_files/memes/surprise_bio
+ln -s /root/starter_files/memes/sw/lab.png /root/starter_files/memes/surprise_bio/
+ln -s /root/starter_files/memes/sw/cis.jpg /root/starter_files/memes/surprise_bio/
+ln -s /root/starter_files/memes/sw/autoimmune.jpg /root/starter_files/memes/surprise_bio
+ln -s /root/starter_files/memes/sci/biochem.png /root/starter_files/memes/surprise_bio/
+ln -s /root/starter_files/memes/sci/etal.jpg /root/starter_files/memes/surprise_bio/
+ln -s /root/starter_files/memes/sci/data.jpg /root/starter_files/memes/surprise_bio/
+ln -s /root/starter_files/memes/lotr/nadh.jpg /root/starter_files/memes/surprise_bio/
+ln -s /root/starter_files/memes/lotr/small.jpg /root/starter_files/memes/surprise_bio/
