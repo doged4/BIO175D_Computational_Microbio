@@ -177,27 +177,32 @@ def optimizeBranches(tree:Utree, seqD:dict, delta:float) -> tuple[Utree,float]:
     branches = newTree.getAllBranches()
 
     # GETS WORSE IN LOOP THROUGH BRANCHES??
-    treeScores = []
     # cScore = scoreThisTree(newTree, seqD, 1)
     # print(cScore)
     # treeScores.append(cScore)
-    for thisBranch in branches:
-        tempnewTree, newScore =optimizeOneBranch(newTree, seqD, delta, thisBranch)
-        # aScore = scoreThisTree(newTree, seqD, 1)
-        # print(str(aScore) + " and " + str(newScore) + " : " + str(newScore - aScore))
-        # assert (aScore == newScore)
-        newTree = tempnewTree
-        treeScores.append(newScore)
+    oldMinScore = 0
+    while True:
+        treeScores = []
+        for thisBranch in branches:
+            tempnewTree, newScore = optimizeOneBranch(newTree, seqD, delta, thisBranch)
+            # aScore = scoreThisTree(newTree, seqD, 1)
+            # print(str(aScore) + " and " + str(newScore) + " : " + str(newScore - aScore))
+            # assert (aScore == newScore)
+            newTree = tempnewTree
+            treeScores.append(newScore)
+
+        assert oldMinScore <= treeScores[-1]
+        # if not treeScores[-1] > treeScores[0] * (1 + 10**(-10)):
+        if oldMinScore == treeScores[-1] :
+            return (newTree, newScore)
+        oldMinScore = treeScores[0]
 
     # print(treeScores) # They are getting worse over time??
     # assert treeScores[-1] > cScore # get rid
     # assert treeScores[-1] > cScore * (1 + 10**(-10))# get ri
     # print(scoreThisTree(tree, seqD, 1) - scoreThisTree(newTree, seqD, 1))
     # if  treeScores[-1] > cScore * (1 + 10**(-10)):
-    if  treeScores[-1] > treeScores[0] * (1 + 10**(-10)):
-        return(optimizeBranches(newTree, seqD, delta))
-    else:
-        return (newTree, newScore)
+
     
 
 
