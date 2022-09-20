@@ -22,9 +22,10 @@ def branchLenLikelihood(leftSub:tuple, rightSub:tuple, seqD:dict, branchLen:floa
     OUTPUTS:
        • a float, the likelihood given the branch length, calculated by ((probchanged or same) * likelihood_right * likelihoodleft * 1/4)
     """
-    total_likelihood_of_seq = 1 #
+    total_likelihood_of_seq = 1 # initial likelihood is 1
     likelihood_char_changed = jukesCantorProbability(branchLen) 
     likelihood_char_same = 1 - likelihood_char_changed
+    print("Jukes Cantor: " + str(likelihood_char_changed))
 
     seq_len = len(list(seqD.values())[0]) # get the first sequence from dictionary to learn length
 
@@ -98,13 +99,22 @@ def getRootedSubtree(tree:Utree, node:int, branch:int) -> tuple:
 
 
 def optimizeOneBranchHelper(leftSubtree: tuple, rightSubtree: tuple, seqD: dict, delta: float, branchlength : float) -> tuple[float, float]: # returns optimal branch length
-    # TODO: comment, rename?
-    """ Returns optimal branch length given right and left subtree. Increments by delta
+    # TODO: comment
+    """ Returns optimal branch length given right and left subtree. Increments by delta every time it is run.
+    INPUTS:
+        • leftSubtree =  tuple, a rooted subtree in newick format on the "left" side of our branch
+        • rightSubtree = tuple, a rooted subtree in newick format on the "right" side of our branch
+        • seqD = dict, a dictionary of the node sequences
+        • delta = float, an increment to multiply or divide by the current branch length, eg 1.01
+        • branchlength = the length of the current branch
+    OUTPUTS:
+        • a float, the local optimal branch length of the current branch
+        • a float, the likelihood of the tree with the local optimal branch length    
+
     """
 
     currentScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, branchlength)
     currentTuple = (currentScore, branchlength)
-    # print(currentScore)
     
     timesDelBranchLength = branchlength * delta
     timesDelScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, timesDelBranchLength)
@@ -181,6 +191,7 @@ def optimizeBranches(tree:Utree, seqD:dict, delta:float) -> tuple[Utree,float]:
     # print(cScore)
     # treeScores.append(cScore)
     oldMinScore = 0
+    oldTreeScores = [0 for x in branches]
     while True:
         treeScores = []
         for thisBranch in branches:
@@ -191,11 +202,18 @@ def optimizeBranches(tree:Utree, seqD:dict, delta:float) -> tuple[Utree,float]:
             newTree = tempnewTree
             treeScores.append(newScore)
 
-        assert oldMinScore <= treeScores[-1]
-        # if not treeScores[-1] > treeScores[0] * (1 + 10**(-10)):
-        if oldMinScore == treeScores[-1] :
+        # assert oldMinScore <= treeScores[-1]
+        # # if not treeScores[-1] > treeScores[0] * (1 + 10**(-10)):
+        # if oldMinScore == treeScores[-1]:
+        #     return (newTree, newScore)
+        # oldMinScore = treeScores[0]
+        # print(str.format( '{0:.60f}',oldMinScore))
+
+        improvedBools = [treeScores[i] > oldTreeScores[i] for i in range(len(branches))]
+        if not any(improvedBools):
             return (newTree, newScore)
-        oldMinScore = treeScores[0]
+        oldTreeScores = treeScores
+        # print(treeScores)
 
     # print(treeScores) # They are getting worse over time??
     # assert treeScores[-1] > cScore # get rid
@@ -249,7 +267,7 @@ def optimizeBranches(tree:Utree, seqD:dict, delta:float) -> tuple[Utree,float]:
 #     print("Tree (arbitrarily rooted) with branch lengths written to:",outTreeFN)
     
 
-# seqD = loadFasta('example1.fna')
-# loadedtree = loadTree('example1.nwk')
-# temptree  = preliminaryBranchLengths(loadedtree.toTuple(),seqD)
-# ttree = Utree.fromTuple(temptree)
+seqD = loadFasta('example1.fna')
+loadedtree = loadTree('example1.nwk')
+temptree  = preliminaryBranchLengths(loadedtree.toTuple(),seqD)
+ttree = Utree.fromTuple(temptree)
