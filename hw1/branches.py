@@ -1,5 +1,5 @@
 # Maximum likelihood branch length calculation
-# Eliot BUsh, Aug 2016
+# Eliot Bush, Aug 2016
 # Joe Wirth, Aug 2022
 # Cevi Bainton and Kenneth Mitchell, Sept 2022
 
@@ -25,7 +25,6 @@ def branchLenLikelihood(leftSub:tuple, rightSub:tuple, seqD:dict, branchLen:floa
     total_likelihood_of_seq = 1 # initial likelihood is 1
     likelihood_char_changed = jukesCantorProbability(branchLen) 
     likelihood_char_same = 1 - likelihood_char_changed
-    print("Jukes Cantor: " + str(likelihood_char_changed))
 
     seq_len = len(list(seqD.values())[0]) # get the first sequence from dictionary to learn length
 
@@ -99,8 +98,8 @@ def getRootedSubtree(tree:Utree, node:int, branch:int) -> tuple:
 
 
 def optimizeOneBranchHelper(leftSubtree: tuple, rightSubtree: tuple, seqD: dict, delta: float, branchlength : float) -> tuple[float, float]: # returns optimal branch length
-    # TODO: comment
-    """ Returns optimal branch length given right and left subtree. Increments by delta every time it is run.
+    """ Returns optimal branch length given right and left subtree. Increments by delta every time it is run. 
+        Helper for optimizeOneBranch
     INPUTS:
         • leftSubtree =  tuple, a rooted subtree in newick format on the "left" side of our branch
         • rightSubtree = tuple, a rooted subtree in newick format on the "right" side of our branch
@@ -110,69 +109,60 @@ def optimizeOneBranchHelper(leftSubtree: tuple, rightSubtree: tuple, seqD: dict,
     OUTPUTS:
         • a float, the local optimal branch length of the current branch
         • a float, the likelihood of the tree with the local optimal branch length    
-
     """
 
+    # Get score of current tree from with current branch length
     currentScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, branchlength)
     currentTuple = (currentScore, branchlength)
     
-    timesDelBranchLength = branchlength * delta
+    # Get score of tree with increased branch length by delta
+    timesDelBranchLength = branchlength * delta # multiply by delta
     timesDelScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, timesDelBranchLength)
     timesDelTuple = (timesDelScore, timesDelBranchLength)
 
-    
-    divDelBranchLength = branchlength / delta
+    # Get score of the tree with decreased branch length by delta
+    divDelBranchLength = branchlength / delta # divide by delta
     divDelScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, divDelBranchLength)
     divDelTuple = (divDelScore, divDelBranchLength)
 
+    # Find which candidate length is the best
     maxTuple = max(currentTuple, timesDelTuple, divDelTuple)
-    maxScore = maxTuple[0]
-    bestBranchLength = maxTuple[1]
+    maxScore = maxTuple[0] # get max likelihood score
+    bestBranchLength = maxTuple[1] # get best branch length
     
-    if maxScore == currentScore: # Base case, at optimum
+    if maxScore == currentScore: # Base case, at optimum where tree is not improving
         return [bestBranchLength, maxScore]
     else:
-        assert(maxScore > currentScore)
-        return optimizeOneBranchHelper(leftSubtree, rightSubtree, seqD, delta, bestBranchLength)
+        assert(maxScore > currentScore) # If this is not true, something is breaking
+        return optimizeOneBranchHelper(leftSubtree, rightSubtree, seqD, delta, bestBranchLength) # Recurse
 
 
 
 
 
 
-def optimizeOneBranch(tree:Utree, seqD: dict, delta: float, branch :int) -> tuple[Utree,  float]: # used to return new best branch as well
-    # TODO: comment this function
+def optimizeOneBranch(tree:Utree, seqD: dict, delta: float, branch :int) -> tuple[Utree,  float]:
+    """ Returns optimal branch length and tree given right and left subtree. Increments by delta every time it is run.
+    INPUTS:
+        • tree =  Utree object, an unrooted tree
+        • seqD = dict, a dictionary of the node sequences
+        • delta = float, an increment to multiply or divide by the current branch length when optimizing, eg 1.01
+        • branch = int, the index of branch to optimize
+    OUTPUTS:
+        • a Utree object, the unrotted tree with our optimized branch length
+        • a float, the likelihood of the tree with the local optimal branch length    
+    """
     leftNode, rightNode = tree.getNodes(branch) # gets nodes next to inputted branch
-    leftSubtree = getRootedSubtree(tree, leftNode, branch)
-    rightSubtree = getRootedSubtree(tree, rightNode, branch)
-    currentBranchLength = tree.getBranchLength(branch)
+    leftSubtree = getRootedSubtree(tree, leftNode, branch) # get rooted version of left subtree
+    rightSubtree = getRootedSubtree(tree, rightNode, branch) # get rooted version of right subtree
+    currentBranchLength = tree.getBranchLength(branch) # retrieves branch length from Utree object
 
+    # Use helper function to recursively optimize branch length and get likelihood score
     newBestBranchLength, newBestScore = optimizeOneBranchHelper(leftSubtree, rightSubtree, seqD, delta, currentBranchLength)
 
-    tree.setBranchLength(branch, newBestBranchLength)
-    # return (tree, newBestBranchLength, newBestScore)
+    tree.setBranchLength(branch, newBestBranchLength) # Updates Utree object
+
     return (tree, newBestScore)
-    # timesDelBranchLength = currentBranchLength + delta
-    # timesDelScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, timesDelBranchLength)
-
-    # divDelBranchLength = currentBranchLength - delta
-    # divDelScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, divDelBranchLength)
-
-    
-
-
-# def scoreThisTree(tree:Utree, seqD: dict, startBranch : int) -> int:
-#     # TODO: delete this function, or integrate it better into optimizeOneBranchLength
-
-#     leftNode, rightNode = tree.getNodes(startBranch)
-#     leftSubtree = getRootedSubtree(tree, leftNode, startBranch)
-#     rightSubtree = getRootedSubtree(tree, rightNode, startBranch)
-#     currentBranchLength = tree.getBranchLength(startBranch)
-
-#     currentScore = branchLenLikelihood(leftSubtree, rightSubtree, seqD, currentBranchLength)
-
-#     return currentScore
-
 
 
 
@@ -180,94 +170,32 @@ def optimizeOneBranch(tree:Utree, seqD: dict, delta: float, branch :int) -> tupl
 
 
 def optimizeBranches(tree:Utree, seqD:dict, delta:float) -> tuple[Utree,float]:
-    # TODO: write this function, comment, 
-    newTree =  tree
-    # newTree = deepcopy(tree)
+    """ Optimizes Utree objects with sequence in seqD optimizes with increments of delta
+    INPUTS:
+        • tree =  Utree object, an unrooted tree
+        • seqD = dict, a dictionary of the sequences in tree
+        • delta = float, an increment to multiply or divide by the current branch length when optimizing, eg 1.01
+        • branch = int, the index of branch to optimize
+    OUTPUTS:
+        • a Utree object, the updated unrooted tree
+        • a float, the likelihood of the tree with optimized lengths    
+    """
 
-    branches = newTree.getAllBranches()
+    branches = tree.getAllBranches() # get branch indices to iterate through
+    oldTreeScores = [0 for x in branches] # set array to store likelihood after each branch optimization of previous cycle
+    improvedBools = [True for x in branches] # set array to record if likelihood improved from cycle to cycle
 
-    # GETS WORSE IN LOOP THROUGH BRANCHES??
-    # cScore = scoreThisTree(newTree, seqD, 1)
-    # print(cScore)
-    # treeScores.append(cScore)
-    oldMinScore = 0
-    oldTreeScores = [0 for x in branches]
-    while True:
+    while any(improvedBools): # Loop terminates when no tree has improved from the last cycle to this one
         treeScores = []
+
+        # iterates through each branch optimizing the tree, saves score to treeScores
         for thisBranch in branches:
-            tempnewTree, newScore = optimizeOneBranch(newTree, seqD, delta, thisBranch)
-            # aScore = scoreThisTree(newTree, seqD, 1)
-            # print(str(aScore) + " and " + str(newScore) + " : " + str(newScore - aScore))
-            # assert (aScore == newScore)
-            newTree = tempnewTree
-            treeScores.append(newScore)
+            tree, newScore = optimizeOneBranch(tree, seqD, delta, thisBranch)
+            treeScores.append(newScore) 
 
-        # assert oldMinScore <= treeScores[-1]
-        # # if not treeScores[-1] > treeScores[0] * (1 + 10**(-10)):
-        # if oldMinScore == treeScores[-1]:
-        #     return (newTree, newScore)
-        # oldMinScore = treeScores[0]
-        # print(str.format( '{0:.60f}',oldMinScore))
-
+        # Records the trees that have improved from last cycle with their corresponding branch, used to terminate while loop
         improvedBools = [treeScores[i] > oldTreeScores[i] for i in range(len(branches))]
-        if not any(improvedBools):
-            return (newTree, newScore)
-        oldTreeScores = treeScores
-        # print(treeScores)
-
-    # print(treeScores) # They are getting worse over time??
-    # assert treeScores[-1] > cScore # get rid
-    # assert treeScores[-1] > cScore * (1 + 10**(-10))# get ri
-    # print(scoreThisTree(tree, seqD, 1) - scoreThisTree(newTree, seqD, 1))
-    # if  treeScores[-1] > cScore * (1 + 10**(-10)):
-
+        
+        oldTreeScores = treeScores # updates oldTreeScores to current scores
     
-
-
-# ##### RUNNER for testing #####
-# def test():
-#     print('test1')
-#     __main('example1.nwk','example1.fna',1.01,'example1Out.nwk')
-#     print()
-#     print('test2')
-#     __main('example2.nwk','example2.fna',1.01,'example2Out.nwk')
-
-
-# # WRAPPER FUNCTION
-# def __main(treeFN:str, fastaFN:str, delta:float, outTreeFN:str) -> None:
-#     """ main:
-#             Accepts a tree filename, a fasta filename, a value to adjust branch
-#             lengths, and a output filename as inputs. Optimizes the branch len-
-#             gths for the provided tree. Prints the statistics of the tree and
-#             saves it to the specified file. Does not return.
-#     """
-#     # constant
-#     EOL = "\n"
-    
-#     # read data into memory
-#     utree = loadTree(treeFN)
-#     seqD = loadFasta(fastaFN)
-
-#     # get some preliminary branch lengths
-#     treeT = preliminaryBranchLengths(utree.toTuple(),seqD)
-#     utree = Utree.fromTuple(treeT)
-    
-#     # optimize the tree
-#     utree,likely = optimizeBranches(utree,seqD,delta)
-
-#     # print the tree data for the final tree
-#     print("Final branch lengths:")
-#     print(utree, EOL)
-
-#     print("Final Likelihood:", format(likely,".5e"))
-
-#     # write the final tree to file
-#     writeUtree(utree,outTreeFN)
-    
-#     print("Tree (arbitrarily rooted) with branch lengths written to:",outTreeFN)
-    
-
-seqD = loadFasta('example1.fna')
-loadedtree = loadTree('example1.nwk')
-temptree  = preliminaryBranchLengths(loadedtree.toTuple(),seqD)
-ttree = Utree.fromTuple(temptree)
+    return (tree, newScore)
