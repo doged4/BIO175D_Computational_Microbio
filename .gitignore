@@ -4,3 +4,4 @@
 */starter_files
 *.pdf
 .Rproj.user
+*.Rhistory
