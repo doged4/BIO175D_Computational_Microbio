@@ -51,26 +51,63 @@ absorbances$strain <- factor(absorbances$strain, c("wt", "mut1", "mut2", "mut3",
 
 # get three separate statistical summaries, one for each condition
 
-# TODO: delete this
-# absorbances %>% 
-#   group_by(condition) %>%
-#   summarize("count" = n(),  "mean" = mean(val), "sd" = sd(val), "se" = sd(val)/sqrt(n()))
-
 summarySE(absorbances, "val", "condition")
 
 # TODO: generate three separate plots, one for each statistical summary
 #### x-axis: time (hrs)
 #### y-axis: A630
 
-# use facet wrapping?
+# absorbances <- absorbances %>%
+#   mutate(log_val = log10(val))
 
-absorbances %>%
-  # group_by(strain) %>%
-  ggplot() +
-  geom_point(aes(x = time, y = val, colour = strain)) +
-  geom_line(aes(x = time, y = )) + 
-  facet_wrap(`strain` ~ `condition`)
- 
+absorbance_means <-absorbances  %>% 
+  group_by(time, strain, condition) %>%
+  # summarise(mean_log_val = mean(log_val), se_log_val = sd(log_val) / sqrt(n()))
+  summarise(mean_val = mean(val), se_val = sd(val) / sqrt(n()))
+
+  
+# scale scale_y_log10
+
+# absorbance_means %>%
+#   ggplot(aes(x = time, y = mean_val, colour = strain)) +
+#   geom_point() +
+#   geom_line() +
+#   geom_errorbar(aes(ymin = mean_val - se_val, ymax = mean_val + se_val)) + 
+#   facet_grid(`strain` ~ `condition`) + 
+#   scale_y_log10() +
+#   xlab("Time (hours)") + ylab("A630 (AU)")
+# ggsave("Double faceted absorbance.png")
+
+absorbance_means %>% 
+  filter(`condition` == 'exp') %>%
+  ggplot(aes(x = time, y = mean_val, colour = strain)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_val - se_val, ymax = mean_val + se_val)) + 
+  scale_y_log10() +
+  xlab("Time (hours)") + ylab("Log 10 A630 (AU)") + ggtitle("Experimental Absorbance")
+ggsave("plots/Experimental_absorbance.png")
+
+absorbance_means %>% 
+  filter(`condition` == 'pos') %>%
+  ggplot(aes(x = time, y = mean_val, colour = strain)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_val - se_val, ymax = mean_val + se_val)) + 
+  scale_y_log10() +
+  xlab("Time (hours)") + ylab("Log 10 A630 (AU)") + ggtitle("Positive Control Absorbance")
+ggsave("plots/Positive_absorbance.png")
+
+absorbance_means %>% 
+  filter(`condition` == 'neg') %>%
+  ggplot(aes(x = time, y = mean_val, colour = strain)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = mean_val - se_val, ymax = mean_val + se_val)) + 
+  scale_y_log10() +
+  xlab("Time (hours)") + ylab("Log 10 A630 (AU)") + ggtitle("Negative Control Absorbance")
+ggsave("plots/Negative_absorbance.png")
+# average and get se for each data point
 
 # save the plots (positive control plot named 'pos.plot' in example below)
 #### example: savePlotAsPng(pos.plot, pos.fn)
